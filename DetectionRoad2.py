@@ -1,3 +1,4 @@
+# Cсылка на подробное описание работы алгоритма: https://www.youtube.com/watch?v=vifax6LzoQw&feature=emb_logo
 import cv2
 import numpy as np
 
@@ -34,11 +35,11 @@ def binary(img, value):
 while video.isOpened():
     _, frame = video.read()  # Чтение видео
     frame = cv2.resize(frame, (img_size[0], img_size[1]))  # Изминения размера, для быстроты алгоритма
-    frame_hls = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)  # Перевод в формат hsl
+    frame_hls = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)  # Перевод в формат hls
 
     # Бинарезуем изображение
     binary_frame = binary(frame, 200)
-    binary_hls = binary(frame_hls, 160)
+    binary_hls = binary(frame_hls, 150)
 
     # Объединение двух бинаризуемых изображений
     all_binary = np.zeros_like(binary_frame)
@@ -60,7 +61,7 @@ while video.isOpened():
     cv2.line(warped_visual, (left_column, 0), (left_column, warped_visual.shape[0]), 110, 2)
     cv2.line(warped_visual, (right_column, 0), (right_column, warped_visual.shape[0]), 110, 2)
 
-    # Поиск беблых линий в окне
+    # Поиск белых линий в окне
     nonzero = warped.nonzero()
     WhitePixelIndY = np.array(nonzero[0])
     WhitePixelIndX = np.array(nonzero[1])

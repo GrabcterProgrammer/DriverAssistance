@@ -86,7 +86,6 @@ while video.isOpened():
         # cv2.imshow("Main Video", frame)
         # cv2.imshow("Canny Video", canny_frame)
         cv2.imshow("Combo Video", combo)
-        # cv2.namedWindow("Main Video", cv2.WINDOW_NORMAL)
 
     except:
         pass
