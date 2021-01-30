@@ -16,6 +16,7 @@ cords = np.float32([
     [0, 0]
 ])
 draw_area = np.array(area_setting, dtype=np.int32)
+nwindow = 12
 
 video = cv2.VideoCapture("video/DriveOnRoad.mp4")
 
@@ -56,14 +57,77 @@ while video.isOpened():
     cv2.line(warped_visual, (left_column, 0), (left_column, warped_visual.shape[0]), 110, 2)
     cv2.line(warped_visual, (right_column, 0), (right_column, warped_visual.shape[0]), 110, 2)
 
+    # search lines in windows
+    nonzero = warped.nonzero()
+    WhitePixelIndY = np.array(nonzero[0])
+    WhitePixelIndX = np.array(nonzero[1])
+
+    # draw windows on white lines
+    window_height = np.int(warped.shape[0]/nwindow)
+    window_half_width = 25
+
+    XCenterLeftWindow = left_column
+    XCenterRightWindow = right_column
+
+    left_line_inds = np.array([], dtype=np.int16)
+    right_line_inds = np.array([], dtype=np.int16)
+
+    out_img = np.dstack((warped, warped, warped))
+
+    for window in range(nwindow):
+        win_y1 = warped.shape[0] - (window + 1) * window_height
+        win_y2 = warped.shape[0] - window * window_height
+
+        left_win_x1 = XCenterLeftWindow - window_half_width
+        left_win_x2 = XCenterLeftWindow + window_half_width
+        right_win_x1 = XCenterRightWindow - window_half_width
+        right_win_x2 = XCenterRightWindow + window_half_width
+
+        cv2.rectangle(out_img, (left_win_x1, win_y1), (left_win_x2, win_y2), (50 + window * 21, 0, 0), 2)
+        cv2.rectangle(out_img, (right_win_x1, win_y1), (right_win_x2, win_y2), (0, 0, 50 + window * 21), 2)
+
+        # search lines in windows
+        good_left_inds = ((WhitePixelIndY>=win_y1) & (WhitePixelIndY<=win_y2) & (WhitePixelIndX>=left_win_x1) & (WhitePixelIndX<=left_win_x2)).nonzero()[0]
+        good_right_inds = ((WhitePixelIndY >= win_y1) & (WhitePixelIndY <= win_y2) & (WhitePixelIndX >= right_win_x1) & (
+                    WhitePixelIndX <= right_win_x2)).nonzero()[0]
+
+        left_line_inds = np.concatenate((left_line_inds, good_left_inds))
+        right_line_inds = np.concatenate((right_line_inds, good_right_inds))
+
+        # Смещение координат линии
+        if len(good_left_inds > 50):
+            XCenterLeftWindow = np.int(np.mean(WhitePixelIndX[good_left_inds]))
+        if len(good_right_inds > 50):
+            XCenterRightWindow = np.int(np.mean(WhitePixelIndX[good_right_inds]))
+
+    # search lines in windows
+    out_img[(WhitePixelIndY[left_line_inds], WhitePixelIndX[left_line_inds])] = [255, 0, 0]
+    out_img[(WhitePixelIndY[right_line_inds], WhitePixelIndX[right_line_inds])] = [0, 0, 255]
+
+    # search central lines
+    # leftx = WhitePixelIndX[left_line_inds]
+    # lefty = WhitePixelIndY[left_line_inds]
+    # rightx = WhitePixelIndX[right_line_inds]
+    # righty = WhitePixelIndY[right_line_inds]
+    #
+    # left_fit = np.polyfit(leftx, lefty, 2)
+    # right_fit = np.polyfit(rightx, righty, 2)
+    #
+    # center_fit = (left_fit + right_fit) / 2
+    #
+    # for ver_ind in range(out_img.shape[0]):
+    #     gor_ind = (center_fit[0]) * (ver_ind **2) + center_fit[1] * ver_ind + center_fit[2]
+    #     cv2.circle(out_img, (int(gor_ind), int(ver_ind)), 2, (255, 0, 255), 2)
+
     # Вывод изображений
-    # cv2.imshow("Main Video", frame)
-    # cv2.imshow("Binary video", binary_frame)
-    # cv2.imshow("BinaryHLS video", binary_hls)
-    # cv2.imshow("AllBinary video", all_binary)
-    # cv2.imshow("AllBinary area video", all_binary_visual)
+    cv2.imshow("Main Video", frame)
+    cv2.imshow("Binary video", binary_frame)
+    cv2.imshow("BinaryHLS video", binary_hls)
+    cv2.imshow("AllBinary video", all_binary)
+    cv2.imshow("AllBinary area video", all_binary_visual)
     cv2.imshow("Warped img", warped)
     cv2.imshow("Warped_visual img", warped_visual)
+    cv2.imshow("Windows", out_img)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         video.release()
