@@ -11,6 +11,7 @@ cap.set(3, frameWidth)
 cap.set(4, frameHeight)
 cap.set(10, brightness)
 
+
 def red_mask(frame):
     # красный цвет представляет из себя две области в пространстве HSV
     lower_red = np.array([0, 85, 110], dtype="uint8")
